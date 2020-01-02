@@ -49,4 +49,13 @@ public class Book {
     public void setPublishers(Set<Publisher> publishers) {
         this.publishers = publishers;
     }
+
+    @Override
+    public String toString() {
+        return "Book{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", publishers=" + publishers +
+                '}';
+    }
 }

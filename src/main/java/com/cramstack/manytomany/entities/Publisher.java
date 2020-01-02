@@ -46,4 +46,13 @@ public class Publisher {
     public void setBooks(Set<Book> books) {
         this.books = books;
     }
+
+    @Override
+    public String toString() {
+        return "Publisher{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", books=" + books +
+                '}';
+    }
 }
