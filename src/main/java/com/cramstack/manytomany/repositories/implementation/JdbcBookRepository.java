@@ -1,13 +1,16 @@
 package com.cramstack.manytomany.repositories.implementation;
 
 import com.cramstack.manytomany.controllers.requests.BookRequest;
+import com.cramstack.manytomany.entities.Book;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
 import java.sql.*;
+import java.util.List;
 
 @Repository
 public class JdbcBookRepository {
@@ -51,5 +54,13 @@ public class JdbcBookRepository {
         }, keyHolder);
 
         return keyHolder.getKey().longValue();
+    }
+
+    public List<Book> findAllData() {
+
+        String GET_ALL_BOOK = "SELECT * FROM book";
+        List<Book> bookList = jdbcTemplate.query(GET_ALL_BOOK , new BeanPropertyRowMapper(Book.class));
+
+        return bookList;
     }
 }

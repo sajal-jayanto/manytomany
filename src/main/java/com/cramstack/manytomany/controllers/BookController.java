@@ -22,7 +22,7 @@ public class BookController {
 
     @GetMapping("/show")
     public List<Book> getAll() {
-        return bookService.getAll();
+        return jdbcBookRepository.findAllData();
     }
 
     @PostMapping("/book/create")
