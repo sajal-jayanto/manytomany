@@ -41,7 +41,7 @@ public class BookServiceImpl implements BookService {
 //            }
 //        }
 //        book.setPublishers(savePublishers);
-        book.setPublishers(publisherRepository.findAllByIdIn(publishers));
+     //   book.setPublishers(publisherRepository.findAllByIdIn(publishers));
         return bookRepository.save(book);
     }
 

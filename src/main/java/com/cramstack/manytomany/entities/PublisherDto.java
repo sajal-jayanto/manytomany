@@ -1,20 +1,22 @@
 package com.cramstack.manytomany.entities;
 
-public class BookDto {
+
+public class PublisherDto {
+
 
     private Integer id;
     private String name;
 
-    public BookDto() {
+    public PublisherDto() {
     }
 
-    public BookDto(Integer id, String name) {
+    public PublisherDto(Integer id, String name) {
         this.id = id;
         this.name = name;
     }
 
     public Integer getId() {
-        return id;
+        return this.id;
     }
 
     public void setId(Integer id) {
@@ -31,7 +33,7 @@ public class BookDto {
 
     @Override
     public String toString() {
-        return "BookDto{" +
+        return "PublisherDto{" +
                 "id=" + id +
                 ", name='" + name + '\'' +
                 '}';

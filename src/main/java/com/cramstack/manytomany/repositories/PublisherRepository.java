@@ -6,8 +6,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Set;
 
-@Repository
 public interface PublisherRepository extends JpaRepository<Publisher,Integer> {
 
-    Set<Publisher> findAllByIdIn(Set<Integer> ids);
+
 }

@@ -1,26 +1,29 @@
 package com.cramstack.manytomany.controllers;
 
 import com.cramstack.manytomany.controllers.requests.PublisherRequest;
-import com.cramstack.manytomany.entities.Publisher;
-import com.cramstack.manytomany.services.interfaces.PublisherService;
+import com.cramstack.manytomany.repositories.implementation.JdbcPublisherRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 
+
 @RestController
 public class PublisherController {
 
-    private PublisherService publisherService;
+    private JdbcPublisherRepository jdbcPublisherRepository;
 
     @Autowired
-    public PublisherController(PublisherService publisherService) {
-        this.publisherService = publisherService;
+    public PublisherController(JdbcPublisherRepository jdbcPublisherRepository) {
+        this.jdbcPublisherRepository = jdbcPublisherRepository;
     }
 
     @PostMapping("/publisher/create")
-    private Publisher create(@RequestBody PublisherRequest publisherRequest){
-        return publisherService.create(publisherRequest);
+    private int create(@RequestBody PublisherRequest publisherRequest){
+        return jdbcPublisherRepository.createPublisher(publisherRequest);
     }
+
+
+
 }
