@@ -1,8 +1,7 @@
 package com.cramstack.manytomany.repositories.implementation;
 
 import com.cramstack.manytomany.controllers.requests.BookRequest;
-import com.cramstack.manytomany.entities.BookDto;
-import com.cramstack.manytomany.entities.BookMapper;
+
 import com.cramstack.manytomany.entities.BookWithPublisherDto;
 import com.cramstack.manytomany.entities.PublisherDto;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,7 +12,6 @@ import org.springframework.stereotype.Repository;
 
 import java.sql.*;
 import java.util.*;
-import java.util.function.BinaryOperator;
 
 @Repository
 public class JdbcBookRepository {
@@ -32,11 +30,13 @@ public class JdbcBookRepository {
 
         long bid = 0;
 
+        String JOIN_BOOK_AND_PUBLISHER_SQL = "INSERT INTO book_publisher(book_id, publisher_id) VALUES (?,?)";
+
         try {
             bid = insertBook(bookRequest.getName());
 
             for (Integer pid : bookRequest.getPublishers()) {
-                jdbcTemplate.update("INSERT INTO book_publisher(book_id, publisher_id) VALUES (?,?)", bid, pid);
+                jdbcTemplate.update(JOIN_BOOK_AND_PUBLISHER_SQL , bid, pid);
             }
 
         } catch (Exception ex) {
@@ -45,7 +45,8 @@ public class JdbcBookRepository {
         return (int) bid;
     }
 
-    public long insertBook(String name) {
+    private long insertBook(String name) {
+
         KeyHolder keyHolder = new GeneratedKeyHolder();
         String INSERT_BOOK_SQL = "INSERT INTO book (name) values(?)";
 
@@ -61,75 +62,86 @@ public class JdbcBookRepository {
 
     public BookWithPublisherDto findBookById(Integer id) {
 
-        String GET_ALL_BOOK_BY_ID = "SELECT book.id AS book_id, book.name AS book_name, publisher.id AS publisher_id , publisher.name AS publisher_name FROM publisher Join book_publisher ON publisher.id = book_publisher.publisher_id Join book ON book.id = book_publisher.book_id where book.id = ?";
-        List<Map<String, Object>> bookList = jdbcTemplate.queryForList(GET_ALL_BOOK_BY_ID , id);
-
-        Set<PublisherDto> publishers = new HashSet<>();
-
         BookWithPublisherDto bookWithPublisherDto = new BookWithPublisherDto();
 
-        for(Map<String , Object> eachRow : bookList){
+        try {
 
-            PublisherDto publisherDto = new PublisherDto();
-            publisherDto.setId((Integer) eachRow.get("publisher_id"));
-            publisherDto.setName((String) eachRow.get("publisher_name"));
+            String GET_BOOK_BY_ID_SQL = "SELECT book.id AS book_id, book.name AS book_name, publisher.id AS publisher_id , publisher.name AS publisher_name FROM publisher Join book_publisher ON publisher.id = book_publisher.publisher_id Join book ON book.id = book_publisher.book_id where book.id = ?";
 
-            publishers.add(publisherDto);
+            List<Map<String, Object>> bookList = jdbcTemplate.queryForList(GET_BOOK_BY_ID_SQL, id);
+            Set<PublisherDto> publishers = new HashSet<>();
 
-            bookWithPublisherDto.setId((Integer) eachRow.get("book_id"));
-            bookWithPublisherDto.setName((String) eachRow.get("book_name"));
+            if(!bookList.isEmpty()) {
+
+                int ZERO = 0;
+
+                bookWithPublisherDto.setId((Integer) bookList.get(ZERO).get("book_id"));
+                bookWithPublisherDto.setName((String) bookList.get(ZERO).get("book_name"));
+
+                for (Map<String, Object> eachBook : bookList) {
+
+                    PublisherDto publisherDto = new PublisherDto();
+                    publisherDto.setId((Integer) eachBook.get("publisher_id"));
+                    publisherDto.setName((String) eachBook.get("publisher_name"));
+
+                    publishers.add(publisherDto);
+                }
+            }
+            else {
+
+                // throw ex
+            }
+            bookWithPublisherDto.setPublisherDto(publishers);
+        }
+        catch (Exception ex){
+            System.out.println(ex.getMessage());
         }
 
-        bookWithPublisherDto.setPublisherDto(publishers);
-
         return bookWithPublisherDto;
-
     }
 
     public List<BookWithPublisherDto> findAllBooks() {
 
         List<BookWithPublisherDto> bookWithPublisherDtos = new ArrayList<>();
 
-        String GET_ALL_BOOKS = "SELECT book.id AS book_id, book.name AS book_name, publisher.id AS publisher_id , publisher.name AS publisher_name FROM publisher Join book_publisher ON publisher.id = book_publisher.publisher_id Join book ON book.id = book_publisher.book_id";
-        List<Map<String, Object>> bookList = jdbcTemplate.queryForList(GET_ALL_BOOKS);
+        try {
 
-        Map<Integer , Set<PublisherDto>> mapBookAndPublisher = new HashMap<>();
-        Map<Integer , String> bookName = new HashMap<>();
+            String GET_ALL_BOOKS_SQL = "SELECT book.id AS book_id, book.name AS book_name, publisher.id AS publisher_id , publisher.name AS publisher_name FROM publisher Join book_publisher ON publisher.id = book_publisher.publisher_id Join book ON book.id = book_publisher.book_id";
 
-        for(Map<String , Object> bookWithPublisher : bookList){
+            List<Map<String, Object>> bookList = jdbcTemplate.queryForList(GET_ALL_BOOKS_SQL);
+            Map<Integer, Set<PublisherDto>> mapBookAndPublisher = new HashMap<>();
+            Map<Integer, String> bookName = new HashMap<>();
 
-            Integer bookId = (Integer) bookWithPublisher.get("book_id");
+            for (Map<String, Object> bookWithPublisher : bookList) {
 
-            PublisherDto publisherDto = new PublisherDto();
-            publisherDto.setId((Integer) bookWithPublisher.get("publisher_id"));
-            publisherDto.setName((String) bookWithPublisher.get("publisher_name"));
+                Integer bookId = (Integer) bookWithPublisher.get("book_id");
 
-            if(!mapBookAndPublisher.containsKey(bookId)) {
+                PublisherDto publisherDto = new PublisherDto();
+                publisherDto.setId((Integer) bookWithPublisher.get("publisher_id"));
+                publisherDto.setName((String) bookWithPublisher.get("publisher_name"));
 
-                Set<PublisherDto> tempSet = new HashSet<>();
-                tempSet.add(publisherDto);
-                mapBookAndPublisher.put(bookId , tempSet);
-                bookName.put(bookId , (String) bookWithPublisher.get("book_name"));
+                if (!mapBookAndPublisher.containsKey(bookId)) {
+
+                    mapBookAndPublisher.put(bookId, new HashSet<>());
+                    bookName.put(bookId, (String) bookWithPublisher.get("book_name"));
+                }
+                mapBookAndPublisher.get(bookId).add(publisherDto);
             }
-            else {
 
-                Set<PublisherDto> tempSet = new HashSet<>(mapBookAndPublisher.get(bookId));
-                tempSet.add(publisherDto);
-                mapBookAndPublisher.replace(bookId , tempSet);
+            for (Map.Entry<Integer, Set<PublisherDto>> eachBook : mapBookAndPublisher.entrySet()) {
+
+                BookWithPublisherDto bookWithPublisherDto = new BookWithPublisherDto();
+
+                bookWithPublisherDto.setId(eachBook.getKey());
+                bookWithPublisherDto.setName(bookName.get(eachBook.getKey()));
+                bookWithPublisherDto.setPublisherDto(eachBook.getValue());
+
+                bookWithPublisherDtos.add(bookWithPublisherDto);
             }
         }
-
-        for (Map.Entry<Integer , Set<PublisherDto>> book : mapBookAndPublisher.entrySet()) {
-
-            BookWithPublisherDto bookWithPublisherDto = new BookWithPublisherDto();
-
-            bookWithPublisherDto.setId(book.getKey());
-            bookWithPublisherDto.setName(bookName.get(book.getKey()));
-            bookWithPublisherDto.setPublisherDto(book.getValue());
-
-            bookWithPublisherDtos.add(bookWithPublisherDto);
+        catch (Exception ex){
+            System.out.println(ex.getMessage());
         }
-
         return bookWithPublisherDtos;
     }
 }

@@ -23,7 +23,4 @@ public class PublisherController {
     private int create(@RequestBody PublisherRequest publisherRequest){
         return jdbcPublisherRepository.createPublisher(publisherRequest);
     }
-
-
-
 }
